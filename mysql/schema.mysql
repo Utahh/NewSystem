@@ -1,0 +1,265 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema sistem
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema sistem
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `sistem` DEFAULT CHARACTER SET utf8 ;
+USE `sistem` ;
+
+-- -----------------------------------------------------
+-- Table `sistem`.`cliente`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`cliente` (
+  `id_cliente` INT(11) NOT NULL AUTO_INCREMENT,
+  `nome_cliente` VARCHAR(50) NOT NULL,
+  `cpf_cliente` VARCHAR(15) NOT NULL,
+  `telefonecliente` VARCHAR(15) NOT NULL,
+  PRIMARY KEY (`id_cliente`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `sistem`.`produtos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`produtos` (
+  `id_produtos` INT(11) NOT NULL AUTO_INCREMENT,
+  `nome_produto` VARCHAR(45) NOT NULL,
+  `categoria_produto` VARCHAR(45) NOT NULL,
+  `preco_produto` DOUBLE NOT NULL,
+  PRIMARY KEY (`id_produtos`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 4
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `sistem`.`entrada_produtos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`entrada_produtos` (
+  `id_entrada` INT(11) NOT NULL AUTO_INCREMENT,
+  `nome_produto` VARCHAR(45) NOT NULL,
+  `valor_entrada` DOUBLE NOT NULL,
+  `id_produto` INT(11) NOT NULL,
+  `quantidade_entrada` INT(11) NOT NULL,
+  `data_entrada` DATETIME NULL DEFAULT NULL,
+  PRIMARY KEY (`id_entrada`),
+  INDEX `fk_entrada_produtos_produtos_idx` (`id_produto` ASC) VISIBLE,
+  CONSTRAINT `fk_entrada_produtos_produtos`
+    FOREIGN KEY (`id_produto`)
+    REFERENCES `sistem`.`produtos` (`id_produtos`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `sistem`.`funcionario`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`funcionario` (
+  `id_funcionario` INT(11) NOT NULL AUTO_INCREMENT,
+  `nome_funcionario` VARCHAR(45) NOT NULL,
+  `usuario` VARCHAR(45) NOT NULL,
+  `senha` VARCHAR(45) NOT NULL,
+  `adm` TINYINT(1) NULL DEFAULT NULL,
+  PRIMARY KEY (`id_funcionario`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 13
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `sistem`.`venda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`venda` (
+  `id_venda` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_funcionario` INT(11) NOT NULL,
+  `id_cliente` INT(11) NOT NULL,
+  `data_venda` DATE NOT NULL,
+  PRIMARY KEY (`id_venda`),
+  INDEX `fk_venda_Funcionario1_idx` (`id_funcionario` ASC) VISIBLE,
+  INDEX `fk_venda_Cliente1_idx` (`id_cliente` ASC) VISIBLE,
+  CONSTRAINT `fk_venda_Cliente1`
+    FOREIGN KEY (`id_cliente`)
+    REFERENCES `sistem`.`cliente` (`id_cliente`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_venda_Funcionario1`
+    FOREIGN KEY (`id_funcionario`)
+    REFERENCES `sistem`.`funcionario` (`id_funcionario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `sistem`.`item_venda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`item_venda` (
+  `id_itemvenda` INT(11) NOT NULL AUTO_INCREMENT,
+  `produtos_id_produtos` INT(11) NOT NULL,
+  `venda_id_venda` INT(11) NOT NULL,
+  `data_saida` DATE NOT NULL,
+  `quantidade` INT(11) NOT NULL,
+  `valor_venda` DOUBLE NULL DEFAULT NULL,
+  PRIMARY KEY (`id_itemvenda`),
+  UNIQUE INDEX `produtos_id_produtos_UNIQUE` (`produtos_id_produtos` ASC) VISIBLE,
+  UNIQUE INDEX `venda_id_venda_UNIQUE` (`venda_id_venda` ASC) VISIBLE,
+  INDEX `fk_produtos_has_venda_venda1_idx` (`venda_id_venda` ASC) VISIBLE,
+  INDEX `fk_produtos_has_venda_produtos1_idx` (`produtos_id_produtos` ASC) VISIBLE,
+  CONSTRAINT `fk_produtos_has_venda_produtos1`
+    FOREIGN KEY (`produtos_id_produtos`)
+    REFERENCES `sistem`.`produtos` (`id_produtos`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_produtos_has_venda_venda1`
+    FOREIGN KEY (`venda_id_venda`)
+    REFERENCES `sistem`.`venda` (`id_venda`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+USE `sistem` ;
+
+-- -----------------------------------------------------
+-- Placeholder table for view `sistem`.`vw_entrada`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`vw_entrada` (`id_entrada` INT, `valor_entrada` INT, `data_entrada` INT, `preço` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `sistem`.`vw_vendas`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistem`.`vw_vendas` (`id_venda` INT, `data_venda` INT, `funcionario` INT, `cliente` INT, `quantidade` INT, `Preço` INT);
+
+-- -----------------------------------------------------
+-- procedure sp_cadastra_cliente
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `sistem`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cadastra_cliente`(
+nomeCli varchar (70), usuarioCli varchar (30), senhaCli varchar(50), CPF varchar(50), telefone varchar(15) , out saida varchar(80), out saida_rotulo varchar (15)
+)
+begin 
+	if exists(select*from cliente where usuario = usuarioCli) then
+    begin
+		set saida_rotulo = 'Ops!';
+        set saida = 'Este Login já está cadastrado';
+	end;
+    elseif exists(select*from cliente where cpf_cliente = CPF) then
+    begin
+		set saida_rotulo = 'Ops!';
+        set saida = 'Este CPF já está cadastrado';
+	end;
+    else 
+		insert into cliente(nome_cliente,usuario,senha,cpf_cliente, telefonecliente)
+        values (nomeCli,usuarioCli,senhaCli,CPF,telefone);
+		if row_count()= 0 then
+			set saida_rotulo = 'ERRO';
+            set saida = 'O Usuário NÃO FOI cadastrado';
+		else 
+			set saida_rotulo = 'Tudo certo';
+            set saida = 'Usuário CADASTRADO com sucesso!';
+		end if;
+	end if;
+    select saida_rotulo, saida;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_cadastra_produto
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `sistem`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cadastra_produto`(
+	nome varchar(45), categoria varchar(45), preco double, out saida varchar(45)
+)
+BEGIN 
+	if not exists (select * from produtos where categoria_produto = categoria) then 
+		begin 
+			insert into produtoS ( nome_produto, categoria_produto, preco_produto)
+            values (nome, categoria, preco);
+            
+            if row_count() = 0 then
+				set saida = "Erro! Nenhum produto foi cadastrado!";
+					else 
+					set saida = "Produto cadastrado com sucesso!";
+			end if;
+		end;
+	end if;
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_cadastro_funcionario
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `sistem`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cadastro_funcionario`(
+	nome varchar(45), usuario_funcionario varchar(45), senha_funcionario int, nivel_funcionario boolean,
+    out saida varchar(80), out saida_rotulo varchar (15)
+)
+BEGIN 
+	if exists(select*from funcionario where usuario = usuario_funcionario) then 
+    begin 
+		set saida_rotulo = 'OPS!';
+        set saida = 'Este usuário já existe';
+    end;
+    elseif (select*from funcionario where cpf_funcionario = cpf) then 
+    begin 
+		set saida_rotulo = 'OPS!';
+        set saida = 'Este CPF já existe';
+    end;
+    else 
+		insert into funcionario (nome_funcionario,usuario, senha, adm)
+        values (nome,usuario_funcionario, senha_funcionario, nivel_funcionario);
+        
+		if row_count() = 0 then
+			set saida_rotulo = 'ERRO';
+            set saida = 'O usuário NÃO FOI cadastrado!';
+		else 
+			set saida_rotulo = 'Tudo certo!';
+            set saida = 'Funcionário CADASTRADO com  Sucesso!';
+		end if;
+	end if;
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- View `sistem`.`vw_entrada`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `sistem`.`vw_entrada`;
+USE `sistem`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `sistem`.`vw_entrada` AS select `sistem`.`entrada_produtos`.`id_entrada` AS `id_entrada`,`sistem`.`entrada_produtos`.`valor_entrada` AS `valor_entrada`,`sistem`.`entrada_produtos`.`data_entrada` AS `data_entrada`,`sistem`.`produtos`.`preco_produto` AS `preço` from (`sistem`.`entrada_produtos` join `sistem`.`produtos` on(`sistem`.`entrada_produtos`.`id_produto` = `sistem`.`produtos`.`id_produtos`));
+
+-- -----------------------------------------------------
+-- View `sistem`.`vw_vendas`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `sistem`.`vw_vendas`;
+USE `sistem`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `sistem`.`vw_vendas` AS select `sistem`.`venda`.`id_venda` AS `id_venda`,`sistem`.`venda`.`data_venda` AS `data_venda`,`sistem`.`funcionario`.`nome_funcionario` AS `funcionario`,`sistem`.`cliente`.`nome_cliente` AS `cliente`,`sistem`.`item_venda`.`quantidade` AS `quantidade`,`sistem`.`item_venda`.`valor_venda` AS `Preço` from (((`sistem`.`venda` join `sistem`.`funcionario` on(`sistem`.`venda`.`id_funcionario` = `sistem`.`funcionario`.`id_funcionario`)) join `sistem`.`item_venda` on(`sistem`.`venda`.`id_venda` = `sistem`.`item_venda`.`venda_id_venda`)) join `sistem`.`cliente` on(`sistem`.`venda`.`id_cliente` = `sistem`.`cliente`.`id_cliente`));
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
